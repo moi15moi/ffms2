@@ -102,53 +102,17 @@ AC_SUBST([FFMPEG_LIBS])
 CPPFLAGS="$CPPFLAGS -D__STDC_CONSTANT_MACROS"
 CFLAGS="$_CFLAGS $FFMPEG_CFLAGS"
 
-AC_DEFUN([TEST_FFMPEG],
-         [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-            #include <libavformat/avformat.h>
-            #include <libswscale/swscale.h>
-            ]],[[
-                avformat_network_init();
-                swscale_version();
-            ]])], [eval $1=yes], [eval $1=no])
-        ])
-
-AC_MSG_CHECKING([whether FFmpeg works])
-LIBS="$_LIBS $FFMPEG_LIBS"
-TEST_FFMPEG([FFMPEG_WORKS])
-AC_MSG_RESULT([$FFMPEG_WORKS])
-if test "$FFMPEG_WORKS" = no; then
-AC_MSG_FAILURE([cannot link with FFmpeg])
-fi
-
+dnl The -Wl,-Bsymbolic flag is not strictly required in all cases, but enabling it by default is safer.
+dnl For example, if a shared library X links against ffms2 built as a static library, which in turn links to FFmpeg statically, this flag is necessary.
+dnl There is no reliable way to determine automatically when it is needed.
+dnl For more details, see FFmpeg's documentation on advanced linking: https://ffmpeg.org/platform.html#Advanced-linking-configuration
 src_core_libffms2_la_LDFLAGS=""
-AC_MSG_CHECKING([whether -Wl,-Bsymbolic is needed])
-if test "$enable_shared" = yes; then
-    _LDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS -shared $lt_prog_compiler_pic"
-    TEST_FFMPEG([no_bsymbolic])
-    if test "$no_bsymbolic" = "no"; then
-        LDFLAGS="$LDFLAGS -Wl,-Bsymbolic"
-        TEST_FFMPEG([bsymbolic])
-        if test "$bsymbolic" = "yes"; then
-            src_core_libffms2_la_LDFLAGS="$src_core_libffms2_la_LDFLAGS -Wl,-Bsymbolic"
-        else
-            AC_MSG_RESULT($bsymbolic)
-            AC_MSG_FAILURE([cannot build ffms2 as a shared library])
-        fi
-    else
-        bsymbolic=no
-    fi
-    LDFLAGS="$_LDFLAGS"
-    src_core_libffms2_la_LDFLAGS="$src_core_libffms2_la_LDFLAGS -version-info $VERSION_INFO"
-else
-    bsymbolic=no
-fi
+AX_CHECK_LINK_FLAG([-Wl,-Bsymbolic], [src_core_libffms2_la_LDFLAGS="$src_core_libffms2_la_LDFLAGS -Wl,-Bsymbolic -version-info $VERSION_INFO"])
 AC_SUBST([src_core_libffms2_la_LDFLAGS])
 
 CFLAGS="$_CFLAGS"
 CPPFLAGS="$_CPPFLAGS"
 LIBS="$_LIBS"
-AC_MSG_RESULT($bsymbolic)
 
 if echo "$host" | $GREP "mingw" >/dev/null 2>&1; then
     LTUNDEF="-no-undefined"
