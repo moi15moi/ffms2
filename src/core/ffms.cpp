@@ -270,6 +270,10 @@ FFMS_API(const char *) FFMS_GetCodecNameI(FFMS_Indexer *Indexer, int Track) {
     return Indexer->GetTrackCodec(Track);
 }
 
+FFMS_API(int64_t) FFMS_GetContainerFirstTimeI(FFMS_Indexer *Indexer) {
+    return Indexer->GetFirstTime();
+}
+
 FFMS_API(int) FFMS_GetNumFrames(FFMS_Track *T) {
     return T->VisibleFrameCount();
 }

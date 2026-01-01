@@ -431,6 +431,10 @@ const char *FFMS_Indexer::GetTrackCodec(int Track) {
     return codec ? codec->name : nullptr;
 }
 
+int64_t FFMS_Indexer::GetFirstTime() {
+    return FormatContext->start_time;
+}
+
 FFMS_Index *FFMS_Indexer::DoIndexing() {
     std::vector<SharedAVContext> AVContexts(FormatContext->nb_streams);
 
