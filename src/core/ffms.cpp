@@ -87,11 +87,11 @@ FFMS_API(void) FFMS_Init(int, int) {
     });
 }
 
-FFMS_API(int) FFMS_GetVersion() {
+FFMS_API(int) FFMS_GetVersion(void) {
     return FFMS_VERSION;
 }
 
-FFMS_API(int) FFMS_GetLogLevel() {
+FFMS_API(int) FFMS_GetLogLevel(void) {
     return av_log_get_level();
 }
 
@@ -268,6 +268,10 @@ FFMS_API(int) FFMS_GetTrackTypeI(FFMS_Indexer *Indexer, int Track) {
 
 FFMS_API(const char *) FFMS_GetCodecNameI(FFMS_Indexer *Indexer, int Track) {
     return Indexer->GetTrackCodec(Track);
+}
+
+FFMS_API(const char *) FFMS_GetTrackMetadataI(FFMS_Indexer *Indexer, int Track, const char *Key) {
+    return Indexer->GetTrackMetadata(Track, Key);
 }
 
 FFMS_API(int) FFMS_GetNumFrames(FFMS_Track *T) {

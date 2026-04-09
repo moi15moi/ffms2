@@ -21,17 +21,17 @@ FFMS2 has the following dependencies:
     - Further recommended configuration options: `--disable-debug --disable-muxers --disable-encoders --disable-filters --disable-hwaccels --disable-network --disable-devices
  - **[zlib][zlib]**
 
-Compiling the library on non-Windows is trivial; the usual `./configure && make && make install` will suffice if FFmpeg and zlib are installed to the default locations.
+Compiling the library is trivial; the usual `meson setup builddir && meson install -C builddir` will suffice if FFmpeg and zlib are installed to the default locations.
 
 ### Windows-specific compilation notes
 You have several options on how to build FFMS2 on Windows.
 
-You can build both FFmpeg and FFMS2 with MinGW-w64, FFmpeg with clang-cl and FFMS2 with VC++ (shared only), or both with VC++.
-The standard Avisynth 2.5 plugin requires building FFMS2 with VC++, while the Avisynth C plugin (which supports Avisynth 2.6) requires building with MinGW (and using the `c_plugin`branch). VapouSynth works as-is with MinGW-w64.
+You can build both FFmpeg and FFMS2 with MinGW-w64, FFmpeg with clang-cl and FFMS2 with VC++ or both with VC++.
 
 These days building everything with MinGW works without doing anything unusual.
 
-You'll have to manually add the location which you installed the headers and libraries to to VC++'s search paths (and if you're building both 32-bit and 64-bit, be sure to add the correct ones).
+If you wanna use clang-cl or VC++, you will need to install pkgconf, so meson can found where you installed ffmpeg.
+The easiest way is to download the latest pkgconf `.msi` from their [CI](https://github.com/pkgconf/pkgconf/actions?query=branch:master).
 
 [ffmpeg]: http://www.ffmpeg.org
 [zlib]: http://www.zlib.net
@@ -576,6 +576,15 @@ const char *FFMS_GetCodecNameI(FFMS_Indexer *Indexer, int Track);
 Returns the human-readable name ("long name" in FFmpeg terms) of the codec used in the given track number in the media file represented by the given `FFMS_Indexer` object.
 Useful if you want to, say, pop up a menu asking the user which tracks he or she wishes to index.
 Note that specifying an invalid track number may lead to undefined behavior.
+
+### FFMS_GetTrackMetadataI - gets the metadata of a given track
+
+[GetTrackMetadataI]: #ffms_gettrackmetadatai---gets-the-metadata-of-a-given-track
+```c++
+const char *FFMS_GetTrackMetadataI(FFMS_Indexer *Indexer, int Track, const char *Key);
+```
+Returns the value of the metadata entry associated with `Key` for the given track number in the media file represented by the given `FFMS_Indexer` object.
+For the list of commonly used metadata keys, see the `metadata_api Public Metadata API` comment in [avformat.h](https://code.ffmpeg.org/FFmpeg/FFmpeg/src/branch/master/libavformat/avformat.h).
 
 ### FFMS_GetFormatNameI - gets the name of the container format used in the given indexer
 
