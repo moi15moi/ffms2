@@ -34,3 +34,6 @@ build-backend = "mesonpy"
 
 [tool.meson-python.args]
 setup = ["-Dpython_plugin=enabled"]
+
+[tool.pytest.ini_options]
+addopts = "--ignore=subprojects/"
