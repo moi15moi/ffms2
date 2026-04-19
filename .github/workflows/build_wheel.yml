@@ -63,6 +63,7 @@ jobs:
           pip install cibuildwheel delvewheel
           cibuildwheel --output-dir dist
         env:
+          CIBW_ARCHS: auto64
           CIBW_BUILD: "cp314-*"
           CIBW_CONFIG_SETTINGS_WINDOWS: 'setup-args="--vsenv" setup-args="-Db_vscrt=mt"'
           CIBW_ENVIRONMENT: PKG_CONFIG_PATH='${{ env.PKG_CONFIG_PATH }}'
