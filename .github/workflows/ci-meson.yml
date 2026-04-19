@@ -4,7 +4,6 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   build-meson:
@@ -114,3 +113,40 @@ jobs:
 
       - name: Run tests
         run: meson test -C builddir --verbose
+
+  call-build-wheel:
+    uses: ./.github/workflows/build_wheel.yml
+
+  run-tests-python:
+    name: "Test Python (${{matrix.os}})"
+    runs-on: ${{ matrix.os }}
+    needs: call-build-wheel
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: wheel-${{ runner.os }}-${{ runner.arch }}
+          path: dist
+          merge-multiple: true
+
+      # We do 2 pip install:
+      # First one: Search in the "dist" folder and only install the wheel vapoursynth_ffms2.
+      # Second one: Search in the "dist" folder and the wheel vapoursynth_ffms2 + it's dependencies.
+      # The goal is to be sure we install the wheel in the dist folder (not the wheel available on PyPi).
+      - name: Install wheel
+        run: |
+          pip install --no-index --find-links dist --no-deps vapoursynth_ffms2
+          pip install --find-links dist vapoursynth_ffms2
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest

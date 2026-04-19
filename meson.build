@@ -13,6 +13,8 @@ project(
     version : '5.1.2'
 )
 
+python_plugin_enabled = get_option('python_plugin').enabled()
+
 cpp_compiler = meson.get_compiler('cpp')
 
 global_cpp_private_args = [
@@ -108,6 +110,12 @@ ffmsindex_src = [
 
 includes = include_directories('include')
 
+ffms2_lib_kwargs = {}
+if python_plugin_enabled
+    py = import('python').find_installation(pure: false)
+    ffms2_lib_kwargs = {'install_dir': py.get_install_dir() / 'vapoursynth/plugins'}
+endif
+
 ffms2_lib = library(
     'ffms2',
     ffms2_src,
@@ -118,6 +126,7 @@ ffms2_lib = library(
     include_directories : includes,
     install : true,
     link_args : ffms2_link_args,
+    kwargs : ffms2_lib_kwargs,
 )
 
 executable(
@@ -127,7 +136,7 @@ executable(
     dependencies : ffmsindex_deps,
     gnu_symbol_visibility : 'hidden',
     include_directories : includes,
-    install : true,
+    install : not python_plugin_enabled,
     link_args : ffmsindex_link_args,
     link_with : ffms2_lib,
 )
@@ -137,14 +146,16 @@ if get_option('default_library') == 'static'
     static_cflags += '-DFFMS_STATIC'
 endif
 
-# TODO - When meson implement a way to specify element in the field "Cflags.private", we will need to add the flag "-DFFMS_STATIC".
-# See: https://github.com/mesonbuild/meson/issues/14749
-pkg_config = import('pkgconfig')
-pkg_config.generate(
-    ffms2_lib,
-    description : 'The Fabulous FM Library 2',
-    extra_cflags : static_cflags,
-)
+if not python_plugin_enabled
+    # TODO - When meson implement a way to specify element in the field "Cflags.private", we will need to add the flag "-DFFMS_STATIC".
+    # See: https://github.com/mesonbuild/meson/issues/14749
+    pkg_config = import('pkgconfig')
+    pkg_config.generate(
+        ffms2_lib,
+        description : 'The Fabulous FM Library 2',
+        extra_cflags : static_cflags,
+    )
+endif
 
 # TODO - When meson implement a way to specify a static compile args, we will need to add the flag "-DFFMS_STATIC".
 # See: https://github.com/mesonbuild/meson/issues/5723
