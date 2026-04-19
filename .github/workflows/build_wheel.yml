@@ -1,0 +1,120 @@
+name: Build wheel
+
+on:
+  workflow_call:
+
+jobs:
+  build-wheel:
+    name: "Build wheel (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    env:
+      FFMPEG_FEATURES: ffmpeg[avcodec,avdevice,avfilter,avformat,swresample,swscale,zlib,bzip2,core,dav1d,gpl,version3,lzma,openssl,xml2]
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            vcpkg_triplet: x64-linux
+          - os: ubuntu-24.04-arm
+            vcpkg_triplet: arm64-linux
+
+          - os: macos-latest
+            vcpkg_triplet: arm64-osx
+            sdist: true
+          - os: macos-15-intel
+            vcpkg_triplet: x64-osx
+
+          - os: windows-latest
+            vcpkg_triplet: x64-windows-static
+            msystem: CLANG64
+            pkgconf: mingw-w64-clang-x86_64-pkgconf
+            pkgconfig_path: clang64\bin\pkg-config.EXE
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install pkgconf (Windows)
+        if: runner.os == 'Windows'
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          install: ${{ matrix.pkgconf }}
+
+      - name: Set PKG_CONFIG_PATH
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export PKG_CONFIG_PATH="/project/vcpkg/installed/${{ matrix.vcpkg_triplet }}/lib/pkgconfig"
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            export PKG_CONFIG_PATH="$RUNNER_TEMP\vcpkg\installed\${{ matrix.vcpkg_triplet }}\lib\pkgconfig"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            export PKG_CONFIG_PATH="$HOME/vcpkg/installed/${{ matrix.vcpkg_triplet }}/lib/pkgconfig"
+          fi
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+      - name: Run cibuildwheel
+        run: |
+          pip install cibuildwheel delvewheel
+          cibuildwheel --output-dir dist
+        env:
+          CIBW_BUILD: "cp314-*"
+          CIBW_CONFIG_SETTINGS_WINDOWS: 'setup-args="--vsenv" setup-args="-Db_vscrt=mt"'
+          CIBW_ENVIRONMENT: PKG_CONFIG_PATH='${{ env.PKG_CONFIG_PATH }}'
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET='13.0' # Same as VapourSynth R74
+          CIBW_ENVIRONMENT_WINDOWS: PKG_CONFIG='${{ steps.msys2.outputs.msys2-location }}\${{ matrix.pkgconfig_path }}'
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: auditwheel repair -w {dest_dir} {wheel} --strip
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair -w {dest_dir} {wheel}
+          CIBW_BEFORE_ALL_LINUX: |
+            if command -v yum >/dev/null; then
+              yum install -y git curl zip unzip tar nasm perl perl-IPC-Cmd ninja-build cmake
+            elif command -v apk >/dev/null; then
+              apk add --no-cache git cmake zip unzip curl nasm perl perl-utils linux-headers py3-pip
+              # We need to force vcpkg to use system binary on musllinux cause the binary it download depend on glibc,
+              # so it fail when running them.
+              export VCPKG_FORCE_SYSTEM_BINARIES=1
+              # meson and ninja from the package manager are too old
+              python -m venv .venv
+              source .venv/bin/activate
+              pip install meson ninja
+            else
+              echo "No supported package manager found" >&2
+              exit 1
+            fi
+            git clone https://github.com/microsoft/vcpkg.git
+            cd vcpkg
+            ./bootstrap-vcpkg.sh
+            ./vcpkg install "${{ env.FFMPEG_FEATURES }}:${{ matrix.vcpkg_triplet }}"
+          CIBW_BEFORE_ALL_MACOS: |
+            brew install nasm
+            git clone https://github.com/microsoft/vcpkg.git $HOME/vcpkg
+            $HOME/vcpkg/bootstrap-vcpkg.sh
+            $HOME/vcpkg/vcpkg install "${FFMPEG_FEATURES}:${{ matrix.vcpkg_triplet }}"
+          CIBW_BEFORE_ALL_WINDOWS: >
+            git clone https://github.com/microsoft/vcpkg "${{ runner.temp }}\vcpkg" &&
+            call "${{ runner.temp }}\vcpkg\bootstrap-vcpkg.bat" &&
+            "${{ runner.temp }}\vcpkg\vcpkg.exe" install "${{ env.FFMPEG_FEATURES }}:${{ matrix.vcpkg_triplet }}"
+
+      - name: Build sdist
+        if: matrix.sdist == true
+        run: |
+          pip install build
+          python -m build --sdist
+
+      # meson-python tags the wheel with the Python interpreter as if we were linking against it.
+      # Since we are not, we can simply replace the tag with "py3".
+      # See: https://github.com/mesonbuild/meson-python/issues/639
+      - name: Replace wheel tag with py3
+        shell: bash
+        run: wheel tags --python-tag py3 --abi-tag none dist/*.whl --remove
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheel-${{ runner.os }}-${{ runner.arch }}
+          path: dist
