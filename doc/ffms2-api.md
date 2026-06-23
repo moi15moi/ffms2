@@ -22,6 +22,7 @@ FFMS2 has the following dependencies:
  - **[zlib][zlib]**
 
 Compiling the library is trivial; the usual `meson setup builddir && meson install -C builddir` will suffice if FFmpeg and zlib are installed to the default locations.
+Alternatively, you can use [muon](https://github.com/muon-build/muon) (version 0.6.0 or higher) with the usual `muon setup builddir && muon -C builddir install`.
 
 ### Windows-specific compilation notes
 You have several options on how to build FFMS2 on Windows.
