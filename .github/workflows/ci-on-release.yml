@@ -12,6 +12,7 @@ jobs:
     name: Release Windows artifacts
     runs-on: windows-latest
     needs: call-build-win
+
     permissions:
       contents: write
 
@@ -19,8 +20,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download wheel artifact
-        uses: actions/download-artifact@v7
+      - name: Download ffms2 build artifact
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ffms2_windows_*
 
       - name: Set RELEASE_TAG environment variable
         run: |
@@ -49,3 +52,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: gh release upload '${{ github.ref_name }}' "$env:RELEASE_TAG.7z"
+
+  call-build-wheel:
+    uses: ./.github/workflows/build_wheel.yml
+
+  publish-to-pypi:
+    name: Publish Package to PyPI
+    runs-on: ubuntu-latest
+    needs: call-build-wheel
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vapoursynth_ffms2
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download ffms2 wheel artifact
+        uses: actions/download-artifact@v8
+        with:
+          pattern: wheel-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
