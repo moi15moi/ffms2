@@ -31,8 +31,8 @@ You can build both FFmpeg and FFMS2 with MinGW-w64, FFmpeg with clang-cl and FFM
 
 These days building everything with MinGW works without doing anything unusual.
 
-If you wanna use clang-cl or VC++, you will need to install pkgconf, so meson can found where you installed ffmpeg.
-The easiest way is to download the latest pkgconf `.msi` from their [CI](https://github.com/pkgconf/pkgconf/actions?query=branch:master).
+If you want to use clang-cl or VC++, you will need to install pkgconf, so meson can find where you installed FFmpeg.
+You can install pkgconf from the `.msi` which is available [here](https://github.com/pkgconf/pkgconf/releases/latest/), or use [WinGet](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (`winget install pkgconf.pkgconf`), or use [Scoop](https://scoop.sh/) (`scoop install main/pkgconf`).
 
 [ffmpeg]: http://www.ffmpeg.org
 [zlib]: http://www.zlib.net
