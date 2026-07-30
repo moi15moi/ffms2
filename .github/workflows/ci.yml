@@ -12,7 +12,12 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        cc: ["gcc", "clang"]
+        ffmpeg_configure_args: ["--disable-shared --enable-static", "--disable-static --enable-shared"]
+        ffms2_configure_args: ["--disable-shared --enable-static", "--disable-static --enable-shared"]
         include:
           - os: ubuntu-latest
             cc: gcc
@@ -26,8 +31,13 @@ jobs:
           - os: windows-latest
             cc: gcc
             cxx: g++
+        exclude:
+          - os: macos-latest
+            cc: gcc
+          - os: windows-latest
+            cc: clang
 
-    name: "Test (${{ matrix.os }}, ${{ matrix.cc }})"
+    name: "Test (${{ matrix.os }}, ${{ matrix.cc }}, ffmpeg=${{ matrix.ffmpeg_configure_args }}, ffms2=${{ matrix.ffms2_configure_args }})"
     runs-on: ${{ matrix.os }}
     env:
       CC: ${{ matrix.cc }}
@@ -40,37 +50,54 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
+
     - name: install deps (ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo add-apt-repository ppa:ubuntuhandbook1/ffmpeg7 -y
         sudo apt-get update
-        sudo apt-get install autoconf automake wget  ffmpeg libavformat-dev libavcodec-dev libswscale-dev libavutil-dev libswresample-dev
+        sudo apt-get install autoconf automake wget nasm
+
     - name: install deps (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew update
-        brew install autoconf automake libtool wget  ffmpeg
+        brew install autoconf automake libtool wget
+
     - name: Setup msys2
       if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
+      uses: msys2/setup-msys2@v2.29.0
       with:
         msystem: MINGW64
         install: >-
           mingw-w64-x86_64-autotools
-          mingw-w64-x86_64-ffmpeg
+          mingw-w64-x86_64-nasm
           mingw-w64-x86_64-toolchain
-    - name: configure
-      run: ./autogen.sh --enable-static --disable-shared
+
+    - name: Download ffmpeg
+      run: wget https://ffmpeg.org/releases/ffmpeg-8.0.tar.xz
+
+    - name: Extract ffmpeg
+      run: tar xf ffmpeg-8.0.tar.xz
+
+    - name: Configure ffmpeg
+      run: ./configure ${{ matrix.ffmpeg_configure_args }} --enable-pic
+      working-directory: ffmpeg-8.0
+
+    - name: Build ffmpeg
+      run: make
+      working-directory: ffmpeg-8.0
+
+    - name: Install ffmpeg
+      run: sudo make install
+      working-directory: ffmpeg-8.0
+
+    - name: Configure ffms2
+      run: |
+        ./autogen.sh ${{ matrix.ffms2_configure_args }} --with-pic
+
     - name: make
       run: make V=1 CXXFLAGS='-Werror -Wno-error=deprecated-declarations' -j2 -k
-    - name: make test
-      run: |
-        if [[ "$RUNNER_OS" == "macOS" ]]; then
-          export CPATH=/opt/homebrew/include
-        fi
-        make test-sync
-        make test -j2 -k
+
   build-win:
     runs-on: windows-latest
     steps:
