@@ -21,17 +21,18 @@ FFMS2 has the following dependencies:
     - Further recommended configuration options: `--disable-debug --disable-muxers --disable-encoders --disable-filters --disable-hwaccels --disable-network --disable-devices
  - **[zlib][zlib]**
 
-Compiling the library on non-Windows is trivial; the usual `./configure && make && make install` will suffice if FFmpeg and zlib are installed to the default locations.
+Compiling the library is trivial; the usual `meson setup builddir && meson install -C builddir` will suffice if FFmpeg and zlib are installed to the default locations.
+Alternatively, you can use [muon](https://github.com/muon-build/muon) (version 0.6.0 or higher) with the usual `muon setup builddir && muon -C builddir install`.
 
 ### Windows-specific compilation notes
 You have several options on how to build FFMS2 on Windows.
 
-You can build both FFmpeg and FFMS2 with MinGW-w64, FFmpeg with clang-cl and FFMS2 with VC++ (shared only), or both with VC++.
-The standard Avisynth 2.5 plugin requires building FFMS2 with VC++, while the Avisynth C plugin (which supports Avisynth 2.6) requires building with MinGW (and using the `c_plugin`branch). VapouSynth works as-is with MinGW-w64.
+You can build both FFmpeg and FFMS2 with MinGW-w64, FFmpeg with clang-cl and FFMS2 with VC++ or both with VC++.
 
 These days building everything with MinGW works without doing anything unusual.
 
-You'll have to manually add the location which you installed the headers and libraries to to VC++'s search paths (and if you're building both 32-bit and 64-bit, be sure to add the correct ones).
+If you want to use clang-cl or VC++, you will need to install pkgconf, so meson can find where you installed FFmpeg.
+You can install pkgconf from the `.msi` which is available [here](https://github.com/pkgconf/pkgconf/releases/latest/), or use [WinGet](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (`winget install pkgconf.pkgconf`), or use [Scoop](https://scoop.sh/) (`scoop install main/pkgconf`).
 
 [ffmpeg]: http://www.ffmpeg.org
 [zlib]: http://www.zlib.net
