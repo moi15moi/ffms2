@@ -55,11 +55,11 @@ jobs:
       if: matrix.os == 'windows-latest'
       uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: UCRT64
         install: >-
-          mingw-w64-x86_64-autotools
-          mingw-w64-x86_64-ffmpeg
-          mingw-w64-x86_64-toolchain
+          mingw-w64-ucrt-x86_64-autotools
+          mingw-w64-ucrt-x86_64-ffmpeg
+          mingw-w64-ucrt-x86_64-toolchain
     - name: configure
       run: ./autogen.sh --enable-static --disable-shared
     - name: make
