@@ -6,7 +6,7 @@ AM_INIT_AUTOMAKE([1.11 subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
 
-VERSION_INFO="5:1:2"
+VERSION_INFO="5:1:3"
 
 AC_MSG_CHECKING([if debug build is enabled])
 
