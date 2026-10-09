@@ -101,6 +101,7 @@ public:
     FFMS_TrackType GetTrackType(int Track);
     const char *GetTrackCodec(int Track);
     const char *GetTrackMetadata(int Track, const char *Key);
+    int GetFirstTime(int64_t *pts, int *timebase);
     const char *GetFormatName();
 };
 

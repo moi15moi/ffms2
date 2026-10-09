@@ -437,6 +437,16 @@ const char *FFMS_Indexer::GetTrackMetadata(int Track, const char *Key) {
     return Entry ? Entry->value : nullptr;
 }
 
+int FFMS_Indexer::GetFirstTime(int64_t *pts, int *timebase) {
+    if (FormatContext->start_time == AV_NOPTS_VALUE || !pts || !timebase)
+        return 1;
+
+    *pts = FormatContext->start_time;
+    *timebase = AV_TIME_BASE;
+
+    return 0;
+}
+
 FFMS_Index *FFMS_Indexer::DoIndexing() {
     std::vector<SharedAVContext> AVContexts(FormatContext->nb_streams);
 

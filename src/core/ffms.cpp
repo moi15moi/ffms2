@@ -274,6 +274,10 @@ FFMS_API(const char *) FFMS_GetTrackMetadataI(FFMS_Indexer *Indexer, int Track, 
     return Indexer->GetTrackMetadata(Track, Key);
 }
 
+FFMS_API(int) FFMS_GetContainerFirstTimeI(FFMS_Indexer *Indexer, int64_t *pts, int *timebase) {
+    return Indexer->GetFirstTime(pts, timebase);
+}
+
 FFMS_API(int) FFMS_GetNumFrames(FFMS_Track *T) {
     return T->VisibleFrameCount();
 }

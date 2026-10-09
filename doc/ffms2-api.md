@@ -586,6 +586,18 @@ const char *FFMS_GetTrackMetadataI(FFMS_Indexer *Indexer, int Track, const char 
 Returns the value of the metadata entry associated with `Key` for the given track number in the media file represented by the given `FFMS_Indexer` object.
 For the list of commonly used metadata keys, see the `metadata_api Public Metadata API` comment in [avformat.h](https://code.ffmpeg.org/FFmpeg/FFmpeg/src/branch/master/libavformat/avformat.h).
 
+### FFMS_GetContainerFirstTimeI - gets the container first time
+
+[GetContainerFirstTimeI]: #ffms_getcontainerfirsttimei---gets-the-container-first-time
+```c++
+int FFMS_GetContainerFirstTimeI(FFMS_Indexer *Indexer, int64_t *pts, int *timebase);
+```
+Retrieves the container start time of the media file represented by the given `FFMS_Indexer` object.
+On success, *pts* is set to the container start timestamp (which corresponds to `AVFormatContext::start_time` in FFmpeg) and *timebase* is set to the timebase it is expressed in.
+Note that the *timebase* might be different than `FFMS_GetTimeBase`.
+Returns 0 on success.
+Returns non-0 on failure (e.g. if the container has no start time, or if *pts* or *timebase* is NULL).
+
 ### FFMS_GetFormatNameI - gets the name of the container format used in the given indexer
 
 [GetFormatNameI]: #ffms_getformatnamei---gets-the-name-of-the-container-format-used-in-the-given-indexer

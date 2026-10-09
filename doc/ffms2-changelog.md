@@ -4,6 +4,7 @@
   - Added layered decoding support, for e.g. spatial MV-HEVC.
   - Added LastEndPTS to FFMS_VideoProperties. This field is the equivalent of LastEndTime, but it is expressed in the video timebase.
   - Added FFMS_GetTrackMetadataI.
+  - Added FFMS_GetContainerFirstTimeI.
 
 - 5.0
   - Fixed all issues with FFmpeg 6.1 which is now the minimum requirement
